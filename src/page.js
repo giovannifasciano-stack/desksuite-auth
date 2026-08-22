@@ -24,6 +24,10 @@ export const LOGIN_HTML = `<!doctype html>
   .primary{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#241c05}
   .ghost{background:transparent;color:var(--txt);border:1px solid var(--line)}
   .link{background:none;border:none;color:var(--muted);font-size:13px;width:auto;margin:14px auto 0;display:block;text-decoration:underline;cursor:pointer;padding:0}
+  .pwwrap{position:relative}
+  .pwwrap input{padding-right:48px}
+  .pweye{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:auto;margin:0;padding:8px 10px;background:none;border:none;color:var(--muted);cursor:pointer;display:flex;align-items:center}
+  .pweye:active{color:var(--gold)}
   .sep{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:12px;margin:18px 0 4px}
   .sep::before,.sep::after{content:"";height:1px;background:var(--line);flex:1}
   .msg{margin-top:14px;font-size:13px;text-align:center;min-height:18px}
@@ -53,6 +57,11 @@ const card=$('card');
 const b64uToBuf=s=>{s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';const b=atob(s);const u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u.buffer;};
 const bufToB64u=b=>{const u=new Uint8Array(b);let s='';for(let i=0;i<u.length;i++)s+=String.fromCharCode(u[i]);return btoa(s).replace(/\\+/g,'-').replace(/\\//g,'_').replace(/=+$/,'');};
 const api=(p,body)=>fetch(p,{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});
+// campo password con occhietto mostra/nascondi
+const EYE='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>';
+const EYEOFF='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/><line x1="3" y1="3" x2="21" y2="21"/></svg>';
+const pf=(id,label,ac)=>\`<label>\${label}</label><div class="pwwrap"><input id="\${id}" type="password" autocomplete="\${ac}"><button type="button" class="pweye" aria-label="Mostra password">\${EYE}</button></div>\`;
+document.addEventListener('click',e=>{const b=e.target.closest('.pweye');if(!b)return;const inp=b.parentElement.querySelector('input');const show=inp.type==='password';inp.type=show?'text':'password';b.innerHTML=show?EYEOFF:EYE;b.setAttribute('aria-label',show?'Nascondi password':'Mostra password');});
 
 function say(el,txt,ok){el.className='msg '+(ok?'ok':'err');el.textContent=txt;}
 
@@ -97,9 +106,9 @@ async function passkeyRegister(msgEl){
 function viewSetup(){
   $('tag').textContent='Primo accesso — crea il tuo account';
   card.innerHTML=\`
-    <label>Email</label><input id="em" type="email" autocomplete="username" placeholder="giovanni.fasciano@me.com">
-    <label>Password (min 12 caratteri)</label><input id="pw" type="password" autocomplete="new-password">
-    <label>Ripeti password</label><input id="pw2" type="password" autocomplete="new-password">
+    <label>Email</label><input id="em" type="email" autocomplete="username" placeholder="la tua email">
+    \${pf('pw','Password (min 12 caratteri)','new-password')}
+    \${pf('pw2','Ripeti password','new-password')}
     <button class="primary" id="go">Crea account</button>
     <div class="msg" id="m"></div>\`;
   $('go').onclick=async()=>{
@@ -122,7 +131,7 @@ function viewLogin(hasPasskey){
   card.innerHTML=\`
     \${hasPasskey?'<button class="primary" id="pk">Entra con FaceID / Touch ID</button><div class="sep">oppure</div>':''}
     <label>Email</label><input id="em" type="email" autocomplete="username">
-    <label>Password</label><input id="pw" type="password" autocomplete="current-password">
+    \${pf('pw','Password','current-password')}
     <button class="\${hasPasskey?'ghost':'primary'}" id="go">Entra</button>
     <button class="link" id="rl">Ho un codice di recupero</button>
     <div class="msg" id="m"></div>\`;
@@ -138,7 +147,7 @@ function viewRecover(){
   $('tag').textContent='Recupero accesso';
   card.innerHTML=\`
     <label>Codice di recupero</label><input id="code" placeholder="ABCD-EFGH-JKMN-PQRS-TUVW-XYZ2">
-    <label>Nuova password (facoltativa)</label><input id="np" type="password" autocomplete="new-password">
+    \${pf('np','Nuova password (facoltativa)','new-password')}
     <button class="primary" id="go">Rientra</button>
     <button class="link" id="bk">Torna al login</button>
     <div class="msg" id="m"></div>\`;
